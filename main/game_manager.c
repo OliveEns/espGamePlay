@@ -121,6 +121,7 @@ esp_err_t game_fs_init(void) {
     }
     
     ESP_LOGI(TAG, "SPIFFS挂载成功 - 总大小: %d KB, 已用: %d KB", total / 1024, used / 1024);
+    game_list_files_debug();   // 打印文件列表
     
     return ESP_OK;
 }
@@ -536,4 +537,52 @@ void game_stop(void) {
     ESP_LOGI(TAG, "游戏停止后剩余堆: %d bytes", free_heap);
     
     ESP_LOGI(TAG, "游戏停止成功");
+}
+
+/**
+ * @brief 递归打印目录树（内部函数）
+ * @param path 当前路径
+ * @param depth 深度（用于缩进）
+ */
+static void print_dir_tree_recursive(const char *path, int depth) {
+    DIR *dir = opendir(path);
+    if (!dir) {
+        ESP_LOGE(TAG, "无法打开目录: %s", path);
+        return;
+    }
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // 跳过 . 和 ..
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+        char fullpath[512];
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
+        struct stat st;
+        if (stat(fullpath, &st) != 0) {
+            ESP_LOGW(TAG, "stat 失败: %s", fullpath);
+            continue;
+        }
+        // 打印缩进
+        char indent[32] = {0};
+        for (int i = 0; i < depth; i++) {
+            strcat(indent, "  ");
+        }
+        if (S_ISDIR(st.st_mode)) {
+            ESP_LOGI(TAG, "%s[DIR]  %s/", indent, entry->d_name);
+            print_dir_tree_recursive(fullpath, depth + 1);
+        } else {
+            ESP_LOGI(TAG, "%s[FILE] %s (%ld bytes)", indent, entry->d_name, (long)st.st_size);
+        }
+    }
+    closedir(dir);
+}
+
+/**
+ * @brief 调试函数：打印 /game 目录下所有文件（递归树形）
+ */
+void game_list_files_debug(void) {
+    ESP_LOGI(TAG, "=== 目录树 (%s) ===", MOUNT_POINT);
+    print_dir_tree_recursive(MOUNT_POINT, 0);
+    ESP_LOGI(TAG, "==================");
 }

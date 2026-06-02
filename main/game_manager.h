@@ -123,6 +123,11 @@ esp_err_t game_run(const char* game_name);
  */
 void game_stop(void);
 
+/**
+ * @brief 调试函数：打印 /game 目录下所有文件
+ */
+void game_list_files_debug(void);
+
 #ifdef __cplusplus
 }
 #endif
