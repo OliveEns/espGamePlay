@@ -100,7 +100,7 @@ static bool create_test_game_if_needed(void) {
  * @param game_count 游戏数量
  * @param selected 当前选中的索引（0 表示第一个游戏，game_count 表示串口下载，game_count+1 表示WiFi下载）
  */
-static void display_menu(game_info_t *games, int game_count, int selected) {
+static void display_menu(game_info_t *games, int game_count, int selected, int delete_idx) {
     st7789_clear(COLOR_BLACK);
     st7789_draw_string(0, 0, "=== Game Menu ===", COLOR_YELLOW, COLOR_BLACK);
 
@@ -108,6 +108,11 @@ static void display_menu(game_info_t *games, int game_count, int selected) {
     for (int i = 0; i < game_count; i++) {
         uint16_t color = (i == selected) ? COLOR_GREEN : COLOR_WHITE;
         st7789_draw_string(0, 20 + i * 16, games[i].name, color, COLOR_BLACK);
+        // 如果该游戏处于待删除状态，在右侧绘制红色 X
+        if (i == delete_idx) {
+            int name_width = strlen(games[i].name) * 8;
+            st7789_draw_string(name_width + 4, 20 + i * 16, "X", COLOR_RED, COLOR_BLACK);
+        }
     }
 
     // 显示串口下载选项
@@ -122,7 +127,7 @@ static void display_menu(game_info_t *games, int game_count, int selected) {
 
     // 提示信息
     st7789_draw_string(0, 20 + (game_count + 2) * 16, "UP/DOWN: Select", COLOR_GRAY, COLOR_BLACK);
-    st7789_draw_string(0, 20 + (game_count + 3) * 16, "OK: Enter  BACK: Exit", COLOR_GRAY, COLOR_BLACK);
+    st7789_draw_string(0, 20 + (game_count + 3) * 16, "OK: Enter  BACK: Delete", COLOR_GRAY, COLOR_BLACK);
 }
 
 /**
@@ -161,7 +166,8 @@ static void main_menu_task(void *arg) {
     esp_err_t ret;
     game_info_t games[MAX_GAMES];
     int game_count = 0;
-    int selected = 0;   // 当前选中的索引
+    int selected = 0;
+    int delete_pending_idx = -1;   // -1 表示无删除等待，否则为待删除的游戏索引
 
     // 初始化屏幕
     st7789_init();
@@ -201,8 +207,11 @@ static void main_menu_task(void *arg) {
             game_count = 0;
         }
 
-        // 显示菜单
-        display_menu(games, game_count, selected);
+        // 确保 selected 有效
+        if (selected >= game_count + 2) selected = 0;
+
+        // 显示菜单（传入 delete_pending_idx 以显示删除提示）
+        display_menu(games, game_count, selected, delete_pending_idx);
 
         // 等待有效按键
         key_code_t key;
@@ -211,19 +220,42 @@ static void main_menu_task(void *arg) {
             vTaskDelay(pdMS_TO_TICKS(50));
         } while (key == KEY_NONE);
 
-        // 处理按键
+        // ========== 删除等待状态处理 ==========
+        if (delete_pending_idx != -1) {
+            if (key == KEY_BACK) {
+                // 确认删除
+                if (delete_pending_idx >= 0 && delete_pending_idx < game_count) {
+                    ESP_LOGI(TAG, "确认删除游戏: %s", games[delete_pending_idx].filename);
+                    game_delete(games[delete_pending_idx].filename);
+                    // 删除后修正 selected
+                    if (selected == delete_pending_idx) {
+                        if (selected >= game_count - 1) selected = game_count - 2;
+                        if (selected < 0) selected = 0;
+                    }
+                }
+                delete_pending_idx = -1;
+                // 刷新界面
+                continue;
+            } else {
+                // 取消删除
+                ESP_LOGI(TAG, "取消删除游戏");
+                delete_pending_idx = -1;
+                continue;
+            }
+        }
+
+        // ========== 正常菜单导航 ==========
         switch (key) {
             case KEY_UP:
                 if (selected > 0) selected--;
-                else selected = game_count + 1;  // 循环到底部
+                else selected = game_count + 1;
                 break;
             case KEY_DOWN:
                 if (selected < game_count + 1) selected++;
-                else selected = 0;               // 循环到顶部
+                else selected = 0;
                 break;
             case KEY_OK:
                 if (selected < game_count) {
-                    // 启动游戏
                     ESP_LOGI(TAG, "启动游戏: %s", games[selected].name);
                     st7789_clear(COLOR_BLACK);
                     st7789_draw_string(0, 0, "Loading...", COLOR_WHITE, COLOR_BLACK);
@@ -233,7 +265,6 @@ static void main_menu_task(void *arg) {
                         st7789_draw_string(0, 20, "Game start failed!", COLOR_RED, COLOR_BLACK);
                         vTaskDelay(pdMS_TO_TICKS(2000));
                     } else {
-                        // 等待游戏结束
                         while (game_task_get_handle() != NULL) {
                             vTaskDelay(pdMS_TO_TICKS(100));
                         }
@@ -247,7 +278,6 @@ static void main_menu_task(void *arg) {
                     show_download_screen(0, NULL, NULL, 0);
                     download_start_serial(UART_NUM_0, 115200);
                     while (download_is_active()) {
-                        // 显示动态等待效果
                         static int dot = 0;
                         st7789_draw_string(0, 140, "Receiving...", COLOR_CYAN, COLOR_BLACK);
                         char dots[4] = {0, 0, 0, 0};
@@ -258,8 +288,6 @@ static void main_menu_task(void *arg) {
                         st7789_draw_string(0, 160, dots, COLOR_CYAN, COLOR_BLACK);
                         dot++;
                         vTaskDelay(pdMS_TO_TICKS(200));
-
-                        // 检查返回键退出下载
                         if (key_get() == KEY_BACK) {
                             download_stop();
                             break;
@@ -276,7 +304,6 @@ static void main_menu_task(void *arg) {
                     show_download_screen(1, ssid, pwd, port);
                     download_start_wifi(ssid, pwd, port);
                     while (download_is_active()) {
-                        // 动态等待效果
                         static int dot = 0;
                         st7789_draw_string(0, 140, "Waiting for connection...", COLOR_CYAN, COLOR_BLACK);
                         char dots[4] = {'.', '.', '.', 0};
@@ -287,7 +314,6 @@ static void main_menu_task(void *arg) {
                         st7789_draw_string(0, 160, dots, COLOR_CYAN, COLOR_BLACK);
                         dot++;
                         vTaskDelay(pdMS_TO_TICKS(200));
-
                         if (key_get() == KEY_BACK) {
                             download_stop();
                             break;
@@ -298,13 +324,17 @@ static void main_menu_task(void *arg) {
                 }
                 break;
             case KEY_BACK:
-                // 在主菜单按返回键无操作（或可添加关机/待机功能）
-                ESP_LOGI(TAG, "BACK key pressed in menu");
+                if (selected < game_count) {
+                    ESP_LOGI(TAG, "准备删除游戏: %s, 再次按BACK确认", games[selected].name);
+                    delete_pending_idx = selected;
+                } else {
+                    ESP_LOGI(TAG, "BACK键未选中游戏，无效");
+                }
                 break;
             default:
                 break;
         }
-        vTaskDelay(pdMS_TO_TICKS(100));  // 消抖
+        vTaskDelay(pdMS_TO_TICKS(100)); // 消抖
     }
 }
 
