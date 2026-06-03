@@ -322,19 +322,13 @@ static void serial_download_task(void *arg) {
     s_uart_num = uart_num;
     uint8_t rx_buf[UART_RX_BUF_SIZE];
     size_t buf_len = 0;
-    TickType_t last_byte_time = xTaskGetTickCount();
-    const TickType_t timeout_ticks = pdMS_TO_TICKS(2000);
 
-    ESP_LOGI(TAG, "Serial download task started on UART%d", uart_num);
+    ESP_LOGI(TAG, "Serial download task started on UART%d (waiting for data...)", uart_num);
 
     while (s_ctx.active) {
         uint8_t c;
         int len = uart_read_bytes(uart_num, &c, 1, pdMS_TO_TICKS(200));
         if (len == 0) {
-            if (xTaskGetTickCount() - last_byte_time > timeout_ticks) {
-                ESP_LOGW(TAG, "Serial download timeout, exiting");
-                break;
-            }
             continue;
         }
         if (len < 0) {
@@ -347,7 +341,6 @@ static void serial_download_task(void *arg) {
             continue;
         }
         rx_buf[buf_len++] = c;
-        last_byte_time = xTaskGetTickCount();
 
         cmd_t cmd;
         uint8_t data[2048];
@@ -378,7 +371,7 @@ static void serial_download_task(void *arg) {
         s_ctx.file = NULL;
     }
     s_ctx.active = false;
-    ESP_LOGI(TAG, "Serial download task exited, active set false");
+    ESP_LOGI(TAG, "Serial download task exited");
     s_download_task = NULL;
     vTaskDelete(NULL);
 }
