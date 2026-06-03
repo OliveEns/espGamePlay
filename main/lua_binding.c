@@ -101,16 +101,86 @@ static int lua_game_rgb(lua_State *L) {
     return 1;
 }
 
+/**
+ * @brief Game.draw_line(x1, y1, x2, y2, color) - 绘制直线
+ */
+static int lua_game_draw_line(lua_State *L) {
+    uint16_t x1 = (uint16_t)luaL_checkinteger(L, 1);
+    uint16_t y1 = (uint16_t)luaL_checkinteger(L, 2);
+    uint16_t x2 = (uint16_t)luaL_checkinteger(L, 3);
+    uint16_t y2 = (uint16_t)luaL_checkinteger(L, 4);
+    uint16_t color = (uint16_t)luaL_checkinteger(L, 5);
+    st7789_draw_line(x1, y1, x2, y2, color);
+    return 0;
+}
+
+/**
+ * @brief Game.draw_rect_border(x, y, w, h, color) - 绘制矩形边框
+ */
+static int lua_game_draw_rect_border(lua_State *L) {
+    uint16_t x = (uint16_t)luaL_checkinteger(L, 1);
+    uint16_t y = (uint16_t)luaL_checkinteger(L, 2);
+    uint16_t w = (uint16_t)luaL_checkinteger(L, 3);
+    uint16_t h = (uint16_t)luaL_checkinteger(L, 4);
+    uint16_t color = (uint16_t)luaL_checkinteger(L, 5);
+    st7789_draw_rect_border(x, y, x + w - 1, y + h - 1, color);
+    return 0;
+}
+
+/**
+ * @brief Game.draw_circle(x0, y0, r, color) - 绘制圆形边框
+ */
+static int lua_game_draw_circle(lua_State *L) {
+    uint16_t x0 = (uint16_t)luaL_checkinteger(L, 1);
+    uint16_t y0 = (uint16_t)luaL_checkinteger(L, 2);
+    uint16_t r  = (uint16_t)luaL_checkinteger(L, 3);
+    uint16_t color = (uint16_t)luaL_checkinteger(L, 4);
+    st7789_draw_circle(x0, y0, r, color);
+    return 0;
+}
+
+/**
+ * @brief Game.fill_circle(x0, y0, r, color) - 填充圆形
+ */
+static int lua_game_fill_circle(lua_State *L) {
+    uint16_t x0 = (uint16_t)luaL_checkinteger(L, 1);
+    uint16_t y0 = (uint16_t)luaL_checkinteger(L, 2);
+    uint16_t r  = (uint16_t)luaL_checkinteger(L, 3);
+    uint16_t color = (uint16_t)luaL_checkinteger(L, 4);
+    st7789_fill_circle(x0, y0, r, color);
+    return 0;
+}
+
+/**
+ * @brief Game.draw_triangle(x1,y1, x2,y2, x3,y3, color) - 绘制三角形
+ */
+static int lua_game_draw_triangle(lua_State *L) {
+    uint16_t x1 = (uint16_t)luaL_checkinteger(L, 1);
+    uint16_t y1 = (uint16_t)luaL_checkinteger(L, 2);
+    uint16_t x2 = (uint16_t)luaL_checkinteger(L, 3);
+    uint16_t y2 = (uint16_t)luaL_checkinteger(L, 4);
+    uint16_t x3 = (uint16_t)luaL_checkinteger(L, 5);
+    uint16_t y3 = (uint16_t)luaL_checkinteger(L, 6);
+    uint16_t color = (uint16_t)luaL_checkinteger(L, 7);
+    st7789_draw_triangle(x1, y1, x2, y2, x3, y3, color);
+    return 0;
+}
+
 // Game 模块函数列表
 static const luaL_Reg game_lib[] = {
-    {"clear_screen", lua_game_clear_screen},
-    {"draw_pixel", lua_game_draw_pixel},
-    {"draw_rect", lua_game_draw_rect},
-    {"draw_text", lua_game_draw_text},
-    {"get_key", lua_game_get_key},
-    {"update_display", lua_game_update_display},
-    {"get_tick", lua_game_get_tick},
-    {"rgb", lua_game_rgb},
+    {"clear_screen",    lua_game_clear_screen},
+    {"draw_pixel",      lua_game_draw_pixel},
+    {"draw_rect",       lua_game_draw_rect},
+    {"draw_text",       lua_game_draw_text},
+    {"get_key",         lua_game_get_key},
+    {"update_display",  lua_game_update_display},
+    {"get_tick",        lua_game_get_tick},
+    {"rgb",             lua_game_rgb},
+    {"draw_line",       lua_game_draw_line},
+    {"draw_rect_border", lua_game_draw_rect_border},
+    {"draw_circle",     lua_game_draw_circle},
+    {"fill_circle",     lua_game_fill_circle},
+    {"draw_triangle",   lua_game_draw_triangle},
     {NULL, NULL}
 };
 
