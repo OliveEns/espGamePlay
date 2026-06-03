@@ -7,6 +7,7 @@
 
 #include <string.h> 
 #include "game_task.h"
+#include "game_manager.h"
 #include "lua_binding.h"
 #include "key_input.h"
 #include "esp_log.h"
@@ -89,6 +90,7 @@ static void game_task_entry(void *params) {
     }
     
     ESP_LOGI(TAG, "游戏任务结束: %s", game_name);
+    game_on_task_exit();
     free((void *)p->game_name);
     free(p);
     

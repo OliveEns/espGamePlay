@@ -519,8 +519,10 @@ void game_stop(void) {
     game_task_wait_exit();
     
     // 关闭Lua状态机
-    lua_close(game_lua_state);
-    game_lua_state = NULL;
+    if (game_lua_state != NULL) {
+        lua_close(game_lua_state);
+        game_lua_state = NULL;
+    }
     
     // 释放脚本内存
     if (game_script_data != NULL) {
@@ -585,4 +587,21 @@ void game_list_files_debug(void) {
     ESP_LOGI(TAG, "=== 目录树 (%s) ===", MOUNT_POINT);
     print_dir_tree_recursive(MOUNT_POINT, 0);
     ESP_LOGI(TAG, "==================");
+}
+
+/**
+ * @brief 游戏任务退出时的回调（由任务调用，清理管理器状态）
+ */
+void game_on_task_exit(void) {
+    if (game_lua_state != NULL) {
+        ESP_LOGI(TAG, "游戏任务退出，清理Lua状态机");
+        lua_close(game_lua_state);
+        game_lua_state = NULL;
+    }
+    if (game_script_data != NULL) {
+        free(game_script_data);
+        game_script_data = NULL;
+        game_script_size = 0;
+    }
+    memset(current_game_name, 0, sizeof(current_game_name));
 }

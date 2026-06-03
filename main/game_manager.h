@@ -128,6 +128,11 @@ void game_stop(void);
  */
 void game_list_files_debug(void);
 
+/**
+ * @brief 游戏任务退出时的回调（由任务调用，清理管理器状态）
+ */
+void game_on_task_exit(void);
+
 #ifdef __cplusplus
 }
 #endif
