@@ -16,6 +16,15 @@
 extern "C" {
 #endif
 
+/* SPI硬件配置 */
+#define ST7789_SPI_HOST    SPI2_HOST    /* SPI主机 */
+#define ST7789_SPI_MOSI    5            /* MOSI引脚 */
+#define ST7789_SPI_CLK     18           /* CLK引脚 */
+#define ST7789_SPI_DC      6            /* DC引脚 */
+#define ST7789_SPI_CS      4            /* CS引脚 */
+#define ST7789_SPI_RST     -1           /* RST引脚 (-1表示不使用硬件复位) */
+#define ST7789_SPI_FREQ    40000000     /* SPI频率 40MHz */
+
 /* BGR565颜色转换宏（ST7789使用BGR格式） */
 #define RGB565(r, g, b) (((((b) >> 3) & 0x1F) << 11) | ((((g) >> 2) & 0x3F) << 5) | (((r) >> 3) & 0x1F))
 

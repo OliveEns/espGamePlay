@@ -11,15 +11,6 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 
-/* SPI硬件配置 - 保持不变 */
-#define ST7789_SPI_HOST    SPI2_HOST    /* SPI主机 */
-#define ST7789_SPI_MOSI    5            /* MOSI引脚 */
-#define ST7789_SPI_CLK     18           /* CLK引脚 */
-#define ST7789_SPI_DC      6            /* DC引脚 */
-#define ST7789_SPI_CS      4            /* CS引脚 */
-#define ST7789_SPI_RST     -1           /* RST引脚 (-1表示不使用硬件复位) */
-#define ST7789_SPI_FREQ    40000000     /* SPI频率 40MHz */
-
 /* 日志标签 */
 static const char *TAG = "ST7789";
 
@@ -181,6 +172,7 @@ void st7789_fill_rect(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t c
         buffer[i+1] = color_low;
     }
 
+    /* 传输像素数据填充窗口 */
     st7789_set_dc(1);
     st7789_set_cs(0);
 
@@ -271,10 +263,7 @@ void st7789_draw_char(uint16_t x, uint16_t y, char c, uint16_t color, uint16_t b
     }
     
     /* 一次性发送字符数据 */
-    st7789_set_dc(1);
-    st7789_set_cs(0);
-    st7789_spi_transmit(buffer, sizeof(buffer));
-    st7789_set_cs(1);
+    st7789_send_data_bytes(buffer, sizeof(buffer));
 }
 
 /**

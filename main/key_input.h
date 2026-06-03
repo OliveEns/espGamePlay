@@ -15,6 +15,19 @@
 extern "C" {
 #endif
 
+// ADC通道定义（IO3）
+#define ADC_CHANNEL ADC1_CHANNEL_3
+
+// GPIO返回键定义
+#define BACK_KEY_GPIO GPIO_NUM_9
+
+// ADC分界线定义
+#define KEY_DOWN_THRESHOLD    800
+#define KEY_LEFT_THRESHOLD   1600
+#define KEY_RIGHT_THRESHOLD  2400
+#define KEY_UP_THRESHOLD     3100
+#define KEY_OK_THRESHOLD     3900
+
 // 按键定义
 typedef enum {
     KEY_NONE = 0,
