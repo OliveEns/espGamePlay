@@ -1,4 +1,5 @@
 /.vscode
+*.game
 
 # macOS
 .DS_Store
