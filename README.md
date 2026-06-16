@@ -11,7 +11,6 @@
 - [快速开始](#快速开始)
 - [Lua 游戏编写规则](#lua-游戏编写规则)
 - [Game API 参考](#game-api-参考)
-- [打包与部署](#打包与部署)
 - [示例游戏](#示例游戏)
 
 ---
@@ -173,7 +172,7 @@ python tools/upload.py tcp 192.168.4.1 snake.game
 ### 编写建议
 
 1. **避免在 `on_render()` 中调用 `clear_screen` 后再全屏重绘**，会导致 SPI 屏幕闪烁。推荐增量绘制：在 `on_init()` 中绘制静态背景，`on_render()` 中只更新变化的部分。
-2. 屏幕坐标范围：**X: 0~239, Y: 0~239**。
+2. 屏幕坐标范围：**X: 0\~239, Y: 0\~239**。
 3. 颜色使用 `Game.rgb(r, g, b)` 转换，参数范围 0~255。
 4. 可以使用 Lua 标准库（`math`、`string`、`table` 等）。
 5. `Game.draw_text` 使用黑色背景，在非黑色背景上使用时请注意。
@@ -259,38 +258,6 @@ python tools/upload.py tcp 192.168.4.1 snake.game
 #### `Game.get_tick()`
 获取系统启动以来的毫秒时间戳。
 - 返回值：毫秒数（整数）
-
----
-
-## 打包与部署
-
-### .game 文件格式
-
-游戏文件由 **64 字节文件头** + **Lua 脚本数据** 组成：
-
-```
-偏移  大小  字段
-0     4     魔数 "GM01"
-4     1     版本号 (0x01)
-5     1     保留
-6     2     游戏名称长度
-8     32    游戏名称 (UTF-8, 不足补 '\0')
-40    16    作者名称 (UTF-8, 不足补 '\0')
-56    4     脚本 CRC32 校验
-60    4     脚本字节数
-64    N     Lua 脚本源码
-```
-
-### 打包命令
-
-```bash
-python tools/pack_game.py <input.lua> <游戏名称> <作者> [output.game]
-```
-
-示例：
-```bash
-python tools/pack_game.py snake.lua 贪吃蛇 Oliver snake.game
-```
 
 ---
 
