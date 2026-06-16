@@ -128,6 +128,14 @@ static void display_menu(game_info_t *games, int game_count, int selected, int d
     // 提示信息
     st7789_draw_string(0, 20 + (game_count + 2) * 16, "UP/DOWN: Select", COLOR_GRAY, COLOR_BLACK);
     st7789_draw_string(0, 20 + (game_count + 3) * 16, "OK: Enter  BACK: Delete", COLOR_GRAY, COLOR_BLACK);
+
+    // 底部显示存储使用情况
+    size_t total = 0, used = 0;
+    if (game_get_storage_info(&total, &used) == ESP_OK) {
+        char buf[64];
+        snprintf(buf, sizeof(buf), "Storage: %.1f / %d KB", (float)used / 1024, (int)(total / 1024));
+        st7789_draw_string(0, 224, buf, COLOR_GRAY, COLOR_BLACK);
+    }
 }
 
 /**

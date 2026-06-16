@@ -119,6 +119,14 @@ uint32_t crc32(const uint8_t *data, size_t size);
 esp_err_t game_run(const char* game_name);
 
 /**
+ * @brief 获取游戏存储使用信息
+ * @param out_total 输出总容量（字节）
+ * @param out_used 输出已用容量（字节）
+ * @return ESP_OK 成功，其他失败
+ */
+esp_err_t game_get_storage_info(size_t *out_total, size_t *out_used);
+
+/**
  * @brief 强制停止当前游戏
  */
 void game_stop(void);

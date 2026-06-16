@@ -542,6 +542,16 @@ void game_stop(void) {
 }
 
 /**
+ * @brief 获取游戏存储使用信息
+ */
+esp_err_t game_get_storage_info(size_t *out_total, size_t *out_used) {
+    if (out_total == NULL || out_used == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    return esp_spiffs_info("game_storage", out_total, out_used);
+}
+
+/**
  * @brief 递归打印目录树（内部函数）
  * @param path 当前路径
  * @param depth 深度（用于缩进）
